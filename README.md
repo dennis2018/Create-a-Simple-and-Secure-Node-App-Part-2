@@ -100,3 +100,12 @@ You are going to use the Auth0 authentication strategy with Passport.js so that 
 ```
 npm install passport passport-auth0 express-session dotenv --save
 ```
+Here's a breakdown of each package being installed:
+
+- passport: As discussed, Passport.js is Express-compatible authentication middleware for Node.js.
+
+- passport-auth0: This is the Auth0 authentication strategy for Passport.js.
+
+- express-session: This is a module to create and manage session middleware.
+
+- dotenv: This is a zero-dependency module that loads environment variables from a .env file into process.env.
