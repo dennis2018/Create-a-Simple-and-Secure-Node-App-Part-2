@@ -177,3 +177,26 @@ You must add this .env hidden file to your .gitignore file to ensure it's not co
 You will populate this file with the Auth0 configuration values in the next section. In this section, you'll focus on wiring up Passport.js.
 
 Open index.js and then import dotenv and load environment variables from .env on the top of the file as follows:
+
+```
+// index.js
+
+require("dotenv").config();
+
+// Rest of the file content
+```
+
+Next, below the statement that imports express-session, import passport and passport-auth0:
+
+```
+// index.js
+
+// dotenv loading
+// Other imports
+const passport = require("passport");
+const Auth0Strategy = require("passport-auth0");
+
+// Rest of the file content
+```
+
+
