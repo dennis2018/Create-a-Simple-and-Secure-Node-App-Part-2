@@ -199,4 +199,104 @@ const Auth0Strategy = require("passport-auth0");
 // Rest of the file content
 ```
 
+With Auth0Strategy in place, proceed to define this strategy. Between the definition of the session options object and app.use(expressSession(session));, add the following variable definition:
 
+```
+// index.js
+
+// dotenv loading
+// Imports
+
+// App, port, and session definitions
+
+const strategy = new Auth0Strategy(
+  {
+    domain: process.env.AUTH0_DOMAIN,
+    clientID: process.env.AUTH0_CLIENT_ID,
+    clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    callbackURL:
+      process.env.AUTH0_CALLBACK_URL || "http://localhost:3000/callback"
+  },
+  function(accessToken, refreshToken, extraParams, profile, done) {
+    /**
+     * Access tokens are used to authorize users to an API 
+     * (resource server)
+     * accessToken is the token to call the Auth0 API 
+     * or a secured third-party API
+     * extraParams.id_token has the JSON Web Token
+     * profile has all the information from the user
+     */
+    return done(null, profile);
+  }
+);
+
+// Rest of the file content
+```
+Here, the Auth0Strategy method takes your Auth0 credentials and initializes the strategy. In the next section, you'll create an Auth0 application to get your Auth0 credentials. At this point, it's expected for you to see errors in the console as follows:
+
+```
+Error: You must provide the domain configuration value to use passport-auth0.
+```
+
+It's important first to understand what the Auth0Strategy is doing for you.
+
+The callback function passed to the Auth0Strategy method is known as the verify callback, which has the purpose of finding the user that possesses a set of credentials. When Passport.js authenticates a request, it parses the credentials or any other authentication information contained in the request. It then invokes the verify callback with the authentication data as arguments, in this case, accessToken, refreshToken, extraParams, and profile.
+
+Since Passport.js is a middleware function, the verify callback also receives done as an argument to pass control to the next middleware function. As Auth0 does all the credential validation for you, the verify callback invokes done to supply Passport with the user that authenticated through the profile object.
+
+Once the strategy is defined, you need to have Passport.js use it. In Express applications, you are also required to initialize Passport and modify the persistent login session using Passport through the app.use() method from Express. To achieve these tasks, update index.js as follows:
+
+```
+// index.js
+
+// dotenv loading
+// Imports
+
+// App, port, session, and strategy definitions
+
+// Production check for cookie configuration
+
+app.use(expressSession(session));
+passport.use(strategy);
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Other app settings
+
+// Rest of the file content
+```
+
+You must ensure that passport.initialize() and passport.session() are added after binding the express-session middleware, expressSession(session), to the application-level middleware.
+
+## Storing and retrieving user data from the session
+The last step in setting up Passport.js is to support login sessions by serializing and deserializing user instances to and from the session. Under the binding of passport.session(), add the following code:
+
+```
+// index.js
+
+// dotenv loading
+// Imports
+
+// App, port, session, and strategy definitions\
+
+// Production check for cookie configuration
+
+app.use(expressSession(session));
+passport.use(strategy);
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+// Rest of the file content
+```
+
+It's important to keep the amount of data stored within the session small to ensure good performance and fast user lookup. Only the user object is serialized to the session. When subsequent requests are received by the server, this stored object is used to locate the user and reassign it to req.user.
+
+Now that Passport.js is configured, the next step is to add authentication endpoints to your API to handle user login and logout along with providing an endpoint for the Auth0 authentication server to communicate with your app.
