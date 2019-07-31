@@ -372,3 +372,169 @@ GET /login performs the user login. This endpoint demonstrates how Express route
 - A custom callback called after passport.authenticate() finishes to handle authentication success or failure and issue a response to the client.
 
 After the authentication server identifies and validates the user, it calls the GET /callback endpoint from your API to pass all the required authentication data. Implement that endpoint by appending the following route definition to your auth.js file:
+
+```
+// auth.js
+
+// Imports, load .env
+
+// GET /login
+
+router.get("/callback", (req, res, next) => {
+  passport.authenticate("auth0", (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
+    if (!user) {
+      return res.redirect("/login");
+    }
+    req.logIn(user, (err) => {
+      if (err) {
+        return next(err);
+      }
+      const returnTo = req.session.returnTo;
+      delete req.session.returnTo;
+      res.redirect(returnTo || "/");
+    });
+  })(req, res, next);
+});
+```
+GET /callback performs the final stage of authentication and redirects to the previously requested URL or / if that URL doesn't exist. Within the custom callback function, you check for the presence of an error, err and if the user object is defined. If there's an error, you pass control to the next middleware function along with the error object. If authentication has failed, user will be false and you redirect the user back to the /login page.
+
+Since the passport.authenticate() method is called within the route controller, it has access to the request, req, and response, res, objects through a closure. If authentication is successful, you call req.LogIn() to establish a login session. req.logIn() is a function exposed by Passport.js on the req object. When the login operation completes, user is assigned to the req object as req.user.
+
+To create a good user experience after the login session is established, you redirect users to the page they were using before the authentication request took place. The route of such page is the value of req.session.returnTo, which you assign to the returnTo variable before deleting it. If returnTo is defined, you redirect the user to that route; otherwise, you take them to a /user page that should, ideally, present the user with their information.
+
+## You can redirect to any other routes.
+As you can see, GET /callback acts as the bridge between your application and the Auth0 authentication server. Using Passport.js you are able to streamline the process of creating a login session and an active user in your app.
+
+You are almost done. The last authentication endpoint to implement is GET /logout and it's the most complex one. Append the following route definition to the content of auth.js:
+```
+// auth.js
+
+// Imports, load .env
+
+// GET /login
+
+// GET /callback
+
+router.get("/logout", (req, res) => {
+  req.logOut();
+
+  let returnTo = req.protocol + "://" + req.hostname;
+  const port = req.connection.localPort;
+
+  if (port !== undefined && port !== 80 && port !== 443) {
+    returnTo =
+      process.env.NODE_ENV === "production"
+        ? `${returnTo}/`
+        : `${returnTo}:${port}/`;
+  }
+
+  const logoutURL = new URL(
+    util.format("https://%s/logout", process.env.AUTH0_DOMAIN)
+  );
+  const searchString = querystring.stringify({
+    client_id: process.env.AUTH0_CLIENT_ID,
+    returnTo: returnTo
+  });
+  logoutURL.search = searchString;
+
+  res.redirect(logoutURL);
+});
+```
+This route performs a session logout and redirects the user to the homepage.
+
+Passport.js also exposes a logOut() function on the request object, req, that can be called from any route controller needing to terminate a login session. Calling req.logOut() removes the req.user property and clears the existing login session. After that, you build the URL that users will be redirected to once the logout is complete as follows:
+
+- Start the URL string with the protocol and hostname:
+
+```
+let returnTo = req.protocol + "://" + req.hostname;
+```
+- Determine if there's a local port being used. If the port is neither undefined, the default port number for web servers using HTTP (80), nor the default port for web servers using HTTPS (443), you append this port to the returnTo URL string if the current Node environment is development:
+
+```
+const port = req.connection.localPort;
+
+if (port !== undefined && port !== 80 && port !== 443) {
+  returnTo =
+    process.env.NODE_ENV === "production"
+      ? `${returnTo}/`
+      : `${returnTo}:${port}/`;
+}
+```
+
+- Use the Node.js URL() constructor along with the util.format() to return a formatted string by replacing format specifiers (characters preceded by the percentage sign, %) with a corresponding argument. In this case the string specifier, %s, gets replaced with the value of process.env.AUTH0_DOMAIN. The Auth0 variables will be set up in the next section.
+
+```
+const logoutURL = new URL(
+  util.format("https://%s/logout", process.env.AUTH0_DOMAIN)
+);
+```
+- Using querystring.stringify, create a URL query string from an object that contains the Auth0 client ID and the returnTo URL:
+
+```
+const searchString = querystring.stringify({
+  client_id: process.env.AUTH0_CLIENT_ID,
+  returnTo: returnTo
+});
+```
+
+- Using url.search, get and set the serialized query portions of logoutURL:
+
+```
+logoutURL.search = searchString;
+```
+- Finally, redirect the user to logoutURL:
+
+```
+res.redirect(logoutURL);
+```
+The GET /logout endpoint isn't too long but it's quite complex. It leverages different Node APIs to dynamically build a logout path depending on the active Node environment, the port being used, and configuration variables.
+
+All the authentication API endpoints are now complete. You now need to export the router and use it with your Express app. First, append this line to the end of auth.js:
+
+```
+// auth.js
+
+// Imports, load .env
+
+// GET /login
+
+// GET /callback
+
+// GET /logout
+
+module.exports = router;
+```
+Then, open index.js and import the authentication router below the Auth0Strategy definition and mount it on your Express app on the root path, /, right above the route definitions:
+
+
+```
+// index.js
+
+// Load .env, other imports
+const Auth0Strategy = require("passport-auth0");
+
+// Import auth router
+const authRouter = require("./auth");
+
+// App, port, session, and strategy definitions and config
+
+// App and passport settings
+app.use(express.static(path.join(__dirname, "public")));
+
+// Mount auth router
+app.use("/", authRouter);
+
+// App routes
+
+// App listening
+```
+Now, when you click on the login button on the index page, the GET /login endpoint gets called. It was mentioned before that the /login endpoint presents the user with a login page, but where's that page? When using Auth0 as your identity platform, you don't need to create a login page, Auth0 provides one for you with a proper form and secure authentication error messages and prompts.
+
+The last thing that you need to do is to mount a middleware function at the application level to define the value of the isAuthenticated variable used in the index Pug template.
+
+## Creating custom middleware with Express
+In index.js add the following code right above the mounting of the authentication router:
