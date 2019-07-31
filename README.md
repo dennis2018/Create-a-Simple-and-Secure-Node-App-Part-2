@@ -68,10 +68,14 @@ Cannot GET /login
 ```
 At this moment, there is no controller to handle the GET /login endpoint in your API. The goal for that endpoint is to manage everything related to authenticating a user, that is, verifying the identity of a user.
 
--- Saying that implementing authentication is challenging is not done with an effort to promote gatekeeping or FUD (fear, uncertainty, and doubt). The process of authentication itself is fairly straightforward; however, what is complex is implementing correctly and securely each step of the process and following best practices as suggested by OWASP which includes:
--- Implementing proper password strength controls such as password length, complexity, and topology.
--- Implementing secure password recovery mechanisms.
--- Storing passwords in a secure fashion which includes hashing passwords with a salt.
--- Transmitting passwords only over TLS or other strong transport.
--- Implementing correctly authentication and error messages that mitigate user ID and password enumeration.
--- Preventing brute-force attacks.
+Saying that implementing authentication is challenging is not done with an effort to promote gatekeeping or FUD (fear, uncertainty, and doubt). The process of authentication itself is fairly straightforward; however, what is complex is implementing correctly and securely each step of the process and following best practices as suggested by OWASP which includes:
+- Implementing proper password strength controls such as password length, complexity, and topology.
+- Implementing secure password recovery mechanisms.
+- Storing passwords in a secure fashion which includes hashing passwords with a salt.
+- Transmitting passwords only over TLS or other strong transport.
+- Implementing correctly authentication and error messages that mitigate user ID and password enumeration.
+- Preventing brute-force attacks.
+
+These authentication best practices address different attack vectors and mitigate vulnerabilities in the authentication process that could compromise the identity of your users. Technically, your team can implement all of these authentication steps; ideally, you delegate the responsibility of strong authentication to an identity platform such as toody.
+
+## Identity as a service
