@@ -300,3 +300,75 @@ passport.deserializeUser((user, done) => {
 It's important to keep the amount of data stored within the session small to ensure good performance and fast user lookup. Only the user object is serialized to the session. When subsequent requests are received by the server, this stored object is used to locate the user and reassign it to req.user.
 
 Now that Passport.js is configured, the next step is to add authentication endpoints to your API to handle user login and logout along with providing an endpoint for the Auth0 authentication server to communicate with your app.
+
+## Creating Express Authentication Endpoints
+In this section you are going to create three endpoints that will handle the authentication flow of the application:
+
+- GET /login
+
+- GET /logout
+
+- GET /callback
+
+To manage these endpoints better, you are going to create them within an authentication module and export them through an Express router so that your Express application can use them.
+
+To start, create an auth.js file under the project directory:
+
+```
+# For macOS/Linux use:
+touch auth.js
+# For Windows PowerShell use:
+ni auth.js
+```
+
+Once the file is created, add the following imports and .env loading to its content:
+
+
+```
+// auth.js
+
+require("dotenv").config();
+
+const express = require("express");
+const router = express.Router();
+const passport = require("passport");
+const util = require("util");
+const url = require("url");
+const querystring = require("querystring");
+```
+Here's an overview of the new modules being used:
+
+- router: A router object is an isolated instance of middleware and routes. It is capable only of performing middleware and routing functions. Every Express application has a built-in app router.
+
+- util: This module is designed to support the needs of Node.js internal APIs by providing useful utility functions to perform tasks like formatting and encoding strings.
+
+- url: This module provides utilities for URL resolution and parsing.
+
+- querystring: This module provides utilities for parsing and formatting URL query strings.
+
+You'll soon see how these modules streamline your route controller logic.
+
+The first endpoint you'll create is the GET /login one. Append the following route definition to your auth.js file:
+
+```
+// auth.js
+
+// Imports, load .env
+
+router.get(
+  "/login",
+  passport.authenticate("auth0", {
+    scope: "openid email profile"
+  }),
+  (req, res) => {
+    res.redirect("/");
+  }
+);
+```
+GET /login performs the user login. This endpoint demonstrates how Express route can take multiple callbacks after the definition of the route path (first argument). Here, you pass two callback functions:
+
+- The passport.authenticate() method which gets the Passport.js strategy and an options object that defines the application scopes as arguments.
+
+- A custom callback called after passport.authenticate() finishes to handle authentication success or failure and issue a response to the client.
+
+After the authentication server identifies and validates the user, it calls the GET /callback endpoint from your API to pass all the required authentication data. Implement that endpoint by appending the following route definition to your auth.js file:
