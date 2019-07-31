@@ -538,3 +538,181 @@ The last thing that you need to do is to mount a middleware function at the appl
 
 ## Creating custom middleware with Express
 In index.js add the following code right above the mounting of the authentication router:
+
+```
+// index.js
+
+// Load .env, imports
+const Auth0Strategy = require("passport-auth0");
+
+const authRouter = require("./auth");
+
+// App, port, session, and strategy definitions and config
+
+// App and passport settings
+app.use(express.static(path.join(__dirname, "public")));
+
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.isAuthenticated();
+  next();
+});
+
+app.use("/", authRouter);
+
+// App routes
+
+// App listening
+```
+res.locals is a property used to expose request-level information, such as the authenticated user, user settings, etc. This information is then available to the views rendered during that request-response cycle, such as the templates that use the isAuthenticated variable.
+
+Now, the button present on the index page can change its content based on whether the user is logged in with Auth0 or not:
+
+```
+// views/index.pug
+...
+    div.NavButtons
+      if isAuthenticated
+        a(href="/user")
+          div.NavButton Just dive in!
+      else
+        a(href="/login")
+          div.NavButton Log in
+          
+ ```
+ 
+ To finally see all this in action, you first need to setup Auth0 by creating an Auth0 tenant and an Auth0 application.
+ 
+ # Setting Up Auth0 with Express and Node.js
+Auth0 is a global leader in Identity-as-a-Service (IDaaS). It provides thousands of customers with a Universal Identity Platform for their web, mobile, IoT, and internal applications. Its extensible platform seamlessly authenticates and secures more than 2.5 billion logins per month, making it loved by developers and trusted by global enterprises.
+
+The best part of the Auth0 platform is how streamlined it is to get started by following these five steps.
+
+## Step 1: Signing up and creating an Auth0 application
+- If you are new to Auth0, Sign up for a free Auth0 account here. A free account offers you:
+- 7,000 free active users & unlimited logins.
+- Universal Login for Web, iOS & Android.
+- Up to 2 social identity providers like Facebook, Github, and Twitter.
+- Unlimited Serverless Rules.
+During the sign-up process, you'll create something called a Tenant, which represents the product or service to which you are adding authentication. More on this in a moment.
+
+Once you are signed in, you are welcomed into the Auth0 Dashboard. In the left sidebar menu, click on "Applications". What are Auth0 applications?
+
+Let's say that you have a photo-sharing app called Auth0gram. You then would create an Auth0 tenant called auth0gram. From a customer perspective, Auth0gram is a customer's product or service.
+
+Say that Auth0gram is available on three platforms: web as a single-page application, Android as a native mobile app, and iOS also as a native mobile app. If each platform needs authentication, then you would need to create three Auth0 applications that would connect with each respective platform to provide it with the wiring and procedures needed to authenticate users through that platform. Auth0gram users belong to the Auth0 tenant and are shared across Auth0 applications.
+
+If you have another product called "Auth0chat" that needs authentication, you'd need to create another tenant, auth0chat, and create new Auth0 applications for it depending on the platforms it uses.
+
+With this knowledge, click on the "Create Application" button present in the "Applications" view. A modal titled "Create Application" will open up. You have the option to provide a Name for the application and to choose its type.
+
+You can name this application "WHATABYTE", choose Regular Web Applications as the type, and click on "Create".
+
+You'll be taken to the "Quickstarts" tab where Auth0 provides different guides to get you up and running fast in setting up Auth0 within a project. If you are curious, check out the Node.js quickstart; otherwise, keep reading on.
+
+## Step 2: Creating a communication bridge between Express and Auth0
+To reduce the overhead of adding and managing authentication, Auth0 offers the Universal Login page, which is the most secure way to easily authenticate users for web applications.
+
+How does Universal Login work?
+
+When your application calls the GET /login endpoint, users are taken to an Auth0 login page. Once they log in, they are redirected back to your application. With security in mind, for this to happen, you need to configure your Auth0 application with URLs that Auth0 can use to redirect users once they are authenticated.
+
+To configure your Auth0 application, click on the Settings tab. Once there, populate the following fields like so:
+- Allowed Callback URLs: http://localhost:3000/callback, http://localhost:8000/callback
+- Allowed Logout URLs: http://localhost:3000/, http://localhost:8000/
+If you take a look at package.json, you'll see that your app is configured to run through two NPM scripts:
+- dev runs your Node.js application using nodemon on port 8000.
+- ui creates a static server to serve the frontend of your application on port 3000.
+To ensure that Auth0 is able to connect with any of these two environments, you need to enter URLs that use both port numbers.
+
+Save these settings by scrolling down and clicking on "Save Changes".
+
+## Step 3: Adding Auth0 configuration variables to Node.js
+Open the .env hidden file that you created earlier and populate it with the following content:
+
+```
+AUTH0_CLIENT_ID=
+AUTH0_DOMAIN=
+AUTH0_CLIENT_SECRET=
+```
+Head back to your Auth0 application "Settings" tab and populate each property of the .env hidden file with its corresponding Auth0 application value:
+- AUTH0_DOMAIN is your Domain value
+When you created a new account with Auth0, you were asked to pick a name for your tenant. This name is used as a subdomain of auth0.com and becomes your unique Auth0 application domain. It's the base URL you will be using to access the Auth0 API and the URL where users are redirected in order to authenticate.
+
+Custom domains can also be used to allow Auth0 to do the authentication heavy lifting for you without compromising on branding experience.
+
+- AUTH0_CLIENT_ID is your Client ID
+This is a critical value as it protects your resources by only granting tokens to requestors if they're authorized. Think of it as your application's password which must be kept confidential at all times. If anyone gains access to your Client Secret they can impersonate your application and access protected resources.
+
+Together, these variables let your application identify itself as an authorized party to interact with the Auth0 authentication server.
+
+## Step 4: Log in
+While your Express app was already depending on variables present on the .env file, these values were not present until recently. This may have caused nodemon and Browsersync to error out and fail if you were running the application. In that case, close any browser window or tab hosting the application, restart nodemon (npm run dev), and then restart Browsersync (npm run ui).
+A new browser window or tab will open up. Click the login button to test that the app is communicating correctly with Auth0 and that you can get authenticated.
+
+If everything was set up correctly, you are redirected to the Universal Login page.
+As explained earlier, this login page is provided by Auth0 with batteries included. It powers not only the login but also the signup of new users into your application. If you have any existing user already, go ahead and log in; otherwise, sign up as a new user.
+
+Alternatively, you may also sign up and log in with Google as it is turned on by default as a social provider.
+
+If you are signing into an application using Auth0 for the first time, you'll see a dialog asking you to authorize your application to access user profile data. Go ahead and click the green arrow button to authorize access.
+
+An advantage of the Universal Login page is that it is part of the Auth0 domain. It lets you delegate the process of user authentication, including registration, to Auth0 which makes it both convenient and secure.
+
+Unless you signed up with Google, if you created a new user through the sign-up process, you will receive an email asking you to verify your email address. There are tons of settings that you can tweak to customize the signup and login experience of your users, such as requiring a username for registration. Feel free to check out the different options presented to you by Auth0 within the Dashboard and the Auth0 documentation.
+
+Once you are signed up or logged in, you are taken back to the home page of your Express app.
+
+Notice that the label of the button in the home page changed from Login to Just Dive in!, which means that you are authenticated.
+
+## Step 5: Accessing guarded routes
+In your application, you will protect the GET /user endpoint using Passport.js middleware to prevent navigation to it if the user is not authenticated. Since you have logged in, when you click on the "Just Dive In!" button that points to /user, you are successfully taken to that view. In case that you were logged out, you should be taken to the Auth0 login screen when trying to access the /user route.
+
+To start, create a middleware function named secure to protect routes and ensure they are only accessible if the user is logged in. Add the following code above the route definitions of index.js:
+
+```
+// index.js
+
+// Other code...
+
+const secured = (req, res, next) => {
+  if (req.user) {
+    return next();
+  }
+  req.session.returnTo = req.originalUrl;
+  res.redirect("/login");
+};
+
+app.get("/", (req, res) => {
+  res.render("index", { title: "Home" });
+});
+
+// Rest of the code...
+```
+Then, update the GET /user endpoint so that it uses that middleware function as follows:
+
+```
+// index.js
+
+// Other code...
+
+app.get("/user", secured, (req, res, next) => {
+  const { _raw, _json, ...userProfile } = req.user;
+  res.render("user", {
+    title: "Profile",
+    userProfile: userProfile
+  });
+});
+
+// Rest of the code...
+```
+You use Javascript object destructuring to unpack values from the req.user object into distinct variables. Using the optional object argument of the res.render() method, you pass the userProfile variable to the user view template along with the page title.
+
+Visit http://localhost:3000/user on the browser, if you are logged in, you will now see the email address you used to log into the application in the greeting banner and the userProfile object shown formatted as JSON within the content container.
+
+If you click on the "Log Out" button, you'd be taken to the index page. Visit http://localhost:3000/user again and you'll be taken to the login page provided by Auth0. Log in back again and you'll be back into the user page.
+
+# Authentication Integration Completed
+That's it! In this part of the tutorial, you learned how Passport.js works, how to configure it, and how to integrate it with Node.js and Auth0 to add authentication to web applications. You also learned about security and identity best practices and how an identity platform such as Auth0 lets you delegate the giant responsibility of keeping logins secure to a team of experts.
+
+# Thank you for your time.
+# if you like the tutorial fork it or give it a star.
