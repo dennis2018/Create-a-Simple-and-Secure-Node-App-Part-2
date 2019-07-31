@@ -79,3 +79,13 @@ Saying that implementing authentication is challenging is not done with an effor
 These authentication best practices address different attack vectors and mitigate vulnerabilities in the authentication process that could compromise the identity of your users. Technically, your team can implement all of these authentication steps; ideally, you delegate the responsibility of strong authentication to an identity platform such as toody.
 
 ## Identity as a service
+Auth0 provides authentication as a service. It gives you the building blocks you need to secure your applications without having to become a security expert. You can connect any application to Auth0 and define the identity providers you want to use (how you want your users to log in).
+
+To connect your app with Auth0, you'll use the Node.js SDKs. Then, any time a user tries to authenticate, Auth0 will verify their identity and send the required information back to your app.
+
+## Using middleware for authentication
+As explained in the "Using middleware" section of the Express docs, an Express application is essentially a series of middleware function calls that execute during the request-response cycle. Each function can modify the request and response objects as needed and then either pass control to the next middleware function or end the request-response cycle.
+
+When creating protected routes in Express, you need to know if the user is authenticated before executing the logic of route controllers. Thus, authentication in Express can be seen as a step in the request-response cycle which can be implemented as middleware.
+
+To make the implementation of authentication easier, instead of writing all the code needed to structure the authentication middleware, you'll use Passport.js, a simple and unobtrusive authentication middleware for Node.js created by Jared Hanson, former Principal Architect at Auth0.
