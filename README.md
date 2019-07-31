@@ -148,3 +148,32 @@ expressSession takes a configuration object, session, that defines what options 
 - resave: This option forces the session to be saved back to the session store, even if the session was never modified during the request. For the Auth0 Passport.js strategy, you need this to be false.
 
 - saveUninitialized: This forces a session that is new but not modified, uninitialized, to be saved to the store. Passport.js handles the modification of the session so you can set it to false. As Gabe de Luca points as a downside of savings uninitialized sessions, if set to true, when your web page gets crawled by bots, a session will be created for them in addition to users who only visit your front page but don't login, which uses up more sessions and memory.
+Additionally, when your app is running as a production instance, you'll only send cookies over HTTPS:
+
+```
+if (app.get("env") === "production") {
+  session.cookie.secure = true; // Serve secure cookies, requires HTTPS
+}
+```
+With session.cookie.secure set to true, compliant clients won't send cookies back to the server if the browser doesn't have an HTTPS connection. Thus, an HTTPS-enabled website is required for secure cookies.
+
+With the session middleware configured, you are ready to add and configure Passport.js in your application
+
+## Configuring Passport with the application settings
+Auth0 requires a couple of configuration values that let the authentication server identify your application securely and correctly. These values will be stored in a hidden file named .env that you can create under the project directory as follows:
+
+```
+# For macOS/Linux use:
+touch .env
+# For Windows PowerShell use:
+ni .env
+(gi .\.env).Attributes += 'Hidden'
+```
+
+Want to learn more about how to create hidden files and other common development tasks with PowerShell? Check out Windows PowerShell Commands for Web Developers.
+
+You must add this .env hidden file to your .gitignore file to ensure it's not committed to version control.
+
+You will populate this file with the Auth0 configuration values in the next section. In this section, you'll focus on wiring up Passport.js.
+
+Open index.js and then import dotenv and load environment variables from .env on the top of the file as follows:
