@@ -109,3 +109,42 @@ Here's a breakdown of each package being installed:
 - express-session: This is a module to create and manage session middleware.
 
 - dotenv: This is a zero-dependency module that loads environment variables from a .env file into process.env.
+
+## Configuring express-session
+Next, open index.js and import the express-session module and configure it as follows:
+
+```
+/ index.js
+
+// Other imports
+const expressSession = require("express-session");
+
+// App instance, port declaration
+
+const session = {
+  secret: "LoxodontaElephasMammuthusPalaeoloxodonPrimelephas",
+  cookie: {},
+  resave: false,
+  saveUninitialized: false
+};
+
+if (app.get("env") === "production") {
+  session.cookie.secure = true; // Serve secure cookies, requires HTTPS
+}
+
+app.use(expressSession(session));
+// Other Express app settings
+
+// Route controllers
+
+// App listening
+```
+
+expressSession takes a configuration object, session, that defines what options are enabled in a session. Here, you are configuring the following options:
+- secret: This is the secret used to sign the session ID cookie. This can be either a string for a single secret or an array of multiple secrets. You are using the long string LoxodontaElephasMammuthusPalaeoloxodonPrimelephas, which is a mix of words from the scientific classification of the elephant.
+
+- cookie: This is the settings object for the session ID cookie. The default value is { path: '/', httpOnly: true, secure: false, maxAge: null }. You are setting this to be an empty object.
+
+- resave: This option forces the session to be saved back to the session store, even if the session was never modified during the request. For the Auth0 Passport.js strategy, you need this to be false.
+
+- saveUninitialized: This forces a session that is new but not modified, uninitialized, to be saved to the store. Passport.js handles the modification of the session so you can set it to false. As Gabe de Luca points as a downside of savings uninitialized sessions, if set to true, when your web page gets crawled by bots, a session will be created for them in addition to users who only visit your front page but don't login, which uses up more sessions and memory.
