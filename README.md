@@ -89,3 +89,14 @@ As explained in the "Using middleware" section of the Express docs, an Express a
 When creating protected routes in Express, you need to know if the user is authenticated before executing the logic of route controllers. Thus, authentication in Express can be seen as a step in the request-response cycle which can be implemented as middleware.
 
 To make the implementation of authentication easier, instead of writing all the code needed to structure the authentication middleware, you'll use Passport.js, a simple and unobtrusive authentication middleware for Node.js created by Jared Hanson, former Principal Architect at Auth0.
+
+# Setting up Passport.js with Node and Express
+As explained in the Passport.js "Overview" document, authentication takes a variety of forms: users may log in by providing a username and password or single sign-on using an OAuth provider such as Facebook or Twitter.
+
+Passport.js offers different authentication mechanisms, known as strategies, to cater to the unique authentication requirements each application has. Strategies are packaged as individual modules and you can choose which strategies to employ, without creating unnecessary dependencies.
+
+You are going to use the Auth0 authentication strategy with Passport.js so that you don't have to worry about creating and managing user credentials yourself. To start, install the following packages:
+
+```
+npm install passport passport-auth0 express-session dotenv --save
+```
